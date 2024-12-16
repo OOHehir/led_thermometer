@@ -4,4 +4,4 @@ cmake_minimum_required(VERSION 3.16)
 idf_component_register(SRCS "http_get.c"
                        INCLUDE_DIRS "include"
                                     "../common/include"
-                       REQUIRES)
+                       REQUIRES "esp_wifi")

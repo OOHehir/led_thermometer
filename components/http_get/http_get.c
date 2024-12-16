@@ -13,7 +13,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
-#include "nvs_flash.h"
+//#include "nvs_flash.h"
 #include "protocol_examples_common.h"
 
 #include "lwip/err.h"
@@ -28,7 +28,7 @@
 #define WEB_PORT "80"
 #define WEB_PATH "/"
 
-static const char *TAG = "example";
+static const char *TAG = __FILE__;
 
 static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
     "Host: "WEB_SERVER":"WEB_PORT"\r\n"

@@ -23,6 +23,7 @@
 // #include "lwip/dns.h"
 #include "sdkconfig.h"
 #include "http_get.h"
+#include "light_driver.h"
 
 void app_main(void)
 {
@@ -35,6 +36,8 @@ void app_main(void)
      * examples/protocols/README.md for more information about this function.
      */
     ESP_ERROR_CHECK(example_connect());
+
+    light_driver_init(false);
 
     xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
