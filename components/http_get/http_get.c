@@ -23,6 +23,8 @@
 #include "lwip/dns.h"
 #include "sdkconfig.h"
 
+#include "http_get.h"
+
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "example.com"
 #define WEB_PORT "80"
@@ -35,8 +37,24 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
     "User-Agent: esp-idf/1.0 esp32\r\n"
     "\r\n";
 
+light_animate_and_set_cb_t light_animate_and_set_cb;
+
+typedef void (*light_animate_and_set_wrapper_t)(const int, const int, const int);
+
+/**
+ * @brief Wrapper to access light_animate_and_set function in light_driver.c
+ */
+void light_animate_and_set_wrapper(const int temp_min, const int temp_now, const int temp_max) {
+  if (0) {
+    ESP_LOGI(TAG, "%s, temp_min=%d, temp_now=%d, temp_max=%d", __func__, temp_min, temp_now, temp_max);
+  }
+  light_animate_and_set_cb(temp_min, temp_now, temp_max);
+}
+
 void http_get_task(void *pvParameters)
 {
+    light_animate_and_set_wrapper_t light_animateSet = (light_animate_and_set_wrapper_t)pvParameters;
+
     const struct addrinfo hints = {
         .ai_family = AF_INET,
         .ai_socktype = SOCK_STREAM,
@@ -45,6 +63,9 @@ void http_get_task(void *pvParameters)
     struct in_addr *addr;
     int s, r;
     char recv_buf[64];
+    int temp_min = 0;
+    int temp_now = 0;
+    int temp_max = 0;
 
     while(1) {
         int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
@@ -112,10 +133,22 @@ void http_get_task(void *pvParameters)
 
         ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
+
+        // Push results to led driver
+        light_animateSet(temp_min, temp_now, temp_max);
+
         for(int countdown = 10; countdown >= 0; countdown--) {
             ESP_LOGI(TAG, "%d... ", countdown);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
         ESP_LOGI(TAG, "Starting again!");
     }
+}
+
+void http_get_init(void(*light_animate_and_set_cb_remote)(const int temp_min, const int temp_now, const int temp_max)){
+
+    light_animate_and_set_cb = light_animate_and_set_cb_remote;
+
+    xTaskCreate(&http_get_task, "http_get_task", 4096, (void *)&light_animate_and_set_wrapper, 5, NULL);
+
 }

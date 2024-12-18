@@ -24,6 +24,7 @@
 #include "sdkconfig.h"
 #include "http_get.h"
 #include "light_driver.h"
+#include "common.h"
 
 void app_main(void)
 {
@@ -39,5 +40,6 @@ void app_main(void)
 
     light_driver_init(false);
 
-    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    http_get_init((light_animate_and_set_cb_t)light_animate_and_set);
+
 }

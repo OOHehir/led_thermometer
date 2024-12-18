@@ -17,7 +17,7 @@ def test_examples_protocol_http_request(dut: Dut) -> None:
     steps: |
       1. join AP/Ethernet
       2. connect to example.com
-      3. check conneciton success
+      3. check connection success
     """
     # check and log bin size
     binary_file = os.path.join(dut.app.binary_path, 'http_request.bin')

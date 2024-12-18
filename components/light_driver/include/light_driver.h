@@ -82,7 +82,7 @@ void light_driver_init(bool power);
  * @param temp_now
  * @param temp_max
  */
-void light_animate_and_set(int temp_min, int temp_now, int temp_max);
+void light_animate_and_set(const int temp_min, const int temp_now, const int temp_max);
 
 #ifdef __cplusplus
 } // extern "C"

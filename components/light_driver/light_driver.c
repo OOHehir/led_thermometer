@@ -83,7 +83,7 @@ void light_driver_init(bool power)
     light_driver_set_power(power);
 }
 
-void light_animate_and_set(int temp_min, int temp_now, int temp_max) {
+void light_animate_and_set(const int temp_min, const int temp_now, const int temp_max) {
     // First animate
     bool led_on_off = false;
     int animate_time = 30;
