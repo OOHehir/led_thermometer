@@ -56,3 +56,4 @@ dkms.conf
 dependencies.lock
 managed_components
 sdkconfig.defaults
+components/common/include/common.h
