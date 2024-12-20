@@ -24,21 +24,23 @@
 #include "sdkconfig.h"
 #include "http_get.h"
 
-
-
 /* Constants that aren't configurable in menuconfig */
-// #define WEB_SERVER "www.google.com"
 #define WEB_SERVER "eu-api.openweathermap.org"
 #define WEB_PORT "80"
-#define WEB_PATH "/data/2.5/weather?q="OPENWEATHERMAP_LOCATION"&appid="OPENWEATHERMAP_API_KEY"&units=metric"
 
-#ifndef #define OPENWEATHERMAP_API_KEY
+// Current weather
+// #define WEB_PATH "/data/2.5/weather?q="OPENWEATHERMAP_LOCATION"&appid="OPENWEATHERMAP_API_KEY"&units=metric"
+
+// 5 day forecast - 3 hour intervals. Change cnt=4 to cnt=8 for 24 hour intervals
+#define WEB_PATH "/data/2.5/forecast?q="OPENWEATHERMAP_LOCATION"&cnt=4&appid="OPENWEATHERMAP_API_KEY"&units=metric"
+
+#ifndef OPENWEATHERMAP_API_KEY
     #error "OPENWEATHERMAP_API_KEY is not defined"
 #endif
 
 static const char *TAG = __FILE__;
 
-static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
+static const char *REQUEST = "GET "WEB_PATH" HTTP/1.0\r\n"
     "Host: api.openweathermap.org\r\n"
     "User-Agent: esp-idf/1.0 esp32\r\n"
     "\r\n";
@@ -73,23 +75,28 @@ void http_get_task(void *pvParameters)
     int temp_now = 0;
     int temp_max = 0;
 
-    while(1) {
+    while (1) {
+        if (esp_wifi_connect() != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to connect to wifi");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            continue;
+        }
+
         int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
 
-        if(err != 0 || res == NULL) {
-            ESP_LOGE(TAG, "DNS lookup failed of %s:%s err=%d res=%p", WEB_SERVER, WEB_PORT,err, res);
+        if (err != 0 || res == NULL) {
+            ESP_LOGE(TAG, "DNS lookup failed of %s:%s err=%d res=%p", WEB_SERVER, WEB_PORT, err, res);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
 
         /* Code to print the resolved IP.
-
-           Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
+        Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
         addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
         ESP_LOGI(TAG, "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
 
         s = socket(res->ai_family, res->ai_socktype, 0);
-        if(s < 0) {
+        if (s < 0) {
             ESP_LOGE(TAG, "... Failed to allocate socket.");
             freeaddrinfo(res);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -106,11 +113,12 @@ void http_get_task(void *pvParameters)
         }
 
         ESP_LOGI(TAG, "... connected");
+        ESP_LOGI(TAG, "Request: %s", REQUEST);
         freeaddrinfo(res);
 
         if (write(s, REQUEST, strlen(REQUEST)) < 0) {
             ESP_LOGE(TAG, "... socket send failed");
-            close(s);
+            ESP_ERROR_CHECK(close(s));
             vTaskDelay(4000 / portTICK_PERIOD_MS);
             continue;
         }
@@ -122,7 +130,7 @@ void http_get_task(void *pvParameters)
         if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &receiving_timeout,
                 sizeof(receiving_timeout)) < 0) {
             ESP_LOGE(TAG, "... failed to set socket receiving timeout");
-            close(s);
+            ESP_ERROR_CHECK(close(s));
             vTaskDelay(4000 / portTICK_PERIOD_MS);
             continue;
         }
@@ -136,9 +144,9 @@ void http_get_task(void *pvParameters)
                 putchar(recv_buf[i]);
             }
         } while (r > 0);
-
+        putchar('\n');
         ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
-        close(s);
+        ESP_ERROR_CHECK(close(s));
 
         // Push results to led driver
         light_animateSet(temp_min, temp_now, temp_max);
@@ -152,9 +160,6 @@ void http_get_task(void *pvParameters)
 }
 
 void http_get_init(void(*light_animate_and_set_cb_remote)(const int temp_min, const int temp_now, const int temp_max)){
-
     light_animate_and_set_cb = light_animate_and_set_cb_remote;
-
     xTaskCreate(&http_get_task, "http_get_task", 4096, (void *)&light_animate_and_set_wrapper, 5, NULL);
-
 }
