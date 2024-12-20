@@ -13,6 +13,4 @@
 
 typedef void (*light_animate_and_set_cb_t)(const int temp_min, const int temp_now, const int temp_max);
 
-
-#define OPENWEATHERMAP_API_KEY "a_big_secret"
 #define OPENWEATHERMAP_LOCATION "Dublin,Ireland"

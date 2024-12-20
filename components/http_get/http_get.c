@@ -22,18 +22,24 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 #include "sdkconfig.h"
-
 #include "http_get.h"
 
+
+
 /* Constants that aren't configurable in menuconfig */
-#define WEB_SERVER "example.com"
+// #define WEB_SERVER "www.google.com"
+#define WEB_SERVER "eu-api.openweathermap.org"
 #define WEB_PORT "80"
-#define WEB_PATH "/"
+#define WEB_PATH "/data/2.5/weather?q="OPENWEATHERMAP_LOCATION"&appid="OPENWEATHERMAP_API_KEY"&units=metric"
+
+#ifndef #define OPENWEATHERMAP_API_KEY
+    #error "OPENWEATHERMAP_API_KEY is not defined"
+#endif
 
 static const char *TAG = __FILE__;
 
 static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
-    "Host: "WEB_SERVER":"WEB_PORT"\r\n"
+    "Host: api.openweathermap.org\r\n"
     "User-Agent: esp-idf/1.0 esp32\r\n"
     "\r\n";
 
@@ -71,7 +77,7 @@ void http_get_task(void *pvParameters)
         int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
 
         if(err != 0 || res == NULL) {
-            ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p", err, res);
+            ESP_LOGE(TAG, "DNS lookup failed of %s:%s err=%d res=%p", WEB_SERVER, WEB_PORT,err, res);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
@@ -91,7 +97,7 @@ void http_get_task(void *pvParameters)
         }
         ESP_LOGI(TAG, "... allocated socket");
 
-        if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
+        if (connect(s, res->ai_addr, res->ai_addrlen) != 0) {
             ESP_LOGE(TAG, "... socket connect failed errno=%d", errno);
             close(s);
             freeaddrinfo(res);
@@ -126,10 +132,10 @@ void http_get_task(void *pvParameters)
         do {
             bzero(recv_buf, sizeof(recv_buf));
             r = read(s, recv_buf, sizeof(recv_buf)-1);
-            for(int i = 0; i < r; i++) {
+            for (int i = 0; i < r; i++) {
                 putchar(recv_buf[i]);
             }
-        } while(r > 0);
+        } while (r > 0);
 
         ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
@@ -137,7 +143,7 @@ void http_get_task(void *pvParameters)
         // Push results to led driver
         light_animateSet(temp_min, temp_now, temp_max);
 
-        for(int countdown = 10; countdown >= 0; countdown--) {
+        for (int countdown = 60; countdown >= 0; countdown--) {
             ESP_LOGI(TAG, "%d... ", countdown);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }

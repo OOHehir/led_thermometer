@@ -51,9 +51,10 @@ Module.symvers
 Mkfile.old
 dkms.conf
 /build
-/sdkconfig.old
 /sdkconfig
 dependencies.lock
 managed_components
 sdkconfig.defaults
-components/common/include/common.h
+sdkconfig.old
+sdkconfig
+components/common/include/sensitive_data.h

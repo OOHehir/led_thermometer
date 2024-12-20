@@ -9,6 +9,7 @@
  *
  */
 #include "common.h"
+#include "sensitive_data.h"
 
 #ifndef __HTTP_GET_H
 #define __HTTP_GET_H
