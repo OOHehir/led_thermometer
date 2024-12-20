@@ -55,3 +55,4 @@ dkms.conf
 /sdkconfig
 dependencies.lock
 managed_components
+sdkconfig.defaults

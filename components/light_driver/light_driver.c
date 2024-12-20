@@ -84,6 +84,7 @@ void light_driver_init(bool power)
 }
 
 void light_animate_and_set(const int temp_min, const int temp_now, const int temp_max) {
+    ESP_LOGI(TAG, "light_animate_and_set: temp_min=%d, temp_now=%d, temp_max=%d", temp_min, temp_now, temp_max);
     // First animate
     bool led_on_off = false;
     int animate_time = 30;
