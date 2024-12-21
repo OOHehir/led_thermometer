@@ -38,7 +38,7 @@
     #error "OPENWEATHERMAP_API_KEY is not defined"
 #endif
 
-static const char *TAG = __FILE__;
+static const char *TAG = "http_get";
 
 static const char *REQUEST = "GET "WEB_PATH" HTTP/1.0\r\n"
     "Host: api.openweathermap.org\r\n"
@@ -71,9 +71,9 @@ void http_get_task(void *pvParameters)
     struct in_addr *addr;
     int s, r;
     char recv_buf[64];
-    int temp_min = 0;
-    int temp_now = 0;
-    int temp_max = 0;
+    int temp_min = 5;
+    int temp_now = 15;
+    int temp_max = 25;
 
     while (1) {
         if (esp_wifi_connect() != ESP_OK) {

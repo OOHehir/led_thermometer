@@ -44,14 +44,12 @@ static const char *TAG = __FILE__;
 static led_strip_handle_t s_led_strip;
 static uint8_t s_red = 255, s_green = 255, s_blue = 255;
 
-void light_driver_set_power(bool power)
-{
+void light_driver_set_power(bool power) {
     ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, 0, s_red * power, s_green * power, s_blue * power));
     ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
 }
 
-void light_driver_set_color(uint32_t red, uint32_t green, uint32_t blue)
-{
+void light_driver_set_color(uint32_t red, uint32_t green, uint32_t blue) {
     s_red = red;
     s_green = green;
     s_blue = blue;
@@ -59,23 +57,22 @@ void light_driver_set_color(uint32_t red, uint32_t green, uint32_t blue)
     ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
 }
 
-void light_driver_init(bool power)
-{
+void light_driver_init(bool power) {
     led_strip_config_t led_strip_conf = {
         .max_leds = CONFIG_EXAMPLE_STRIP_LED_NUMBER,
         .strip_gpio_num = CONFIG_EXAMPLE_STRIP_LED_GPIO,
-        .led_model = LED_MODEL_WS2812,        // LED strip model
-        .color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_GRB, // The color order of the strip: GRB
+        .led_model = LED_MODEL_WS2812,           // LED strip model
+        .color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_GRB,    // The color order of the strip: GRB
         .flags = {
-            .invert_out = false, // don't invert the output signal
+            .invert_out = false,                 // don't invert the output signal
         }
     };
     led_strip_rmt_config_t rmt_conf = {
         .clk_src = RMT_CLK_SRC_DEFAULT,        // different clock source can lead to different power consumption
-        .resolution_hz = 10 * 1000 * 1000,  // 10MHz
+        .resolution_hz = 10 * 1000 * 1000,      // 10MHz
         .mem_block_symbols = 64,               // the memory size of each RMT channel, in words (4 bytes)
         .flags = {
-            .with_dma = false, // DMA feature is available on chips like ESP32-S3/P4
+            .with_dma = false,                  // DMA feature is available on chips like ESP32-S3/P4
         }
     };
 
@@ -86,31 +83,22 @@ void light_driver_init(bool power)
 void light_animate_and_set(const int temp_min, const int temp_now, const int temp_max) {
     ESP_LOGI(TAG, "light_animate_and_set: temp_min=%d, temp_now=%d, temp_max=%d", temp_min, temp_now, temp_max);
     // First animate
-    bool led_on_off = false;
-    int animate_time = 30;
-    while (animate_time > 0 && led_on_off == false) {
-        if (led_on_off) {
-            /* Set the LED pixel using RGB from 0 (0%) to 255 (100%) for each color */
-            for (int i = 0; i < CONFIG_EXAMPLE_STRIP_LED_NUMBER; i++) {
-                ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, i, 5, 5, 5));
-            }
-            /* Refresh the strip to send data */
-            ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
-            ESP_LOGI(TAG, "LED ON!");
-        } else {
-            /* Set all LED off to clear all pixels */
-            ESP_ERROR_CHECK(led_strip_clear(s_led_strip));
-            ESP_LOGI(TAG, "LED OFF!");
-        }
-
-        led_on_off = !led_on_off;
-        vTaskDelay(pdMS_TO_TICKS(500));
-        --animate_time;
+    for (int index = 0; index < CONFIG_EXAMPLE_STRIP_LED_NUMBER; index++) {
+        ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, index, 5, 5, 5));
+        ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
+        vTaskDelay(pdMS_TO_TICKS(50));
+        ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, index, 0, 0, 0));
     }
-
+    for (int index = CONFIG_EXAMPLE_STRIP_LED_NUMBER - 1; index > 0; index--) {
+        ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, index, 5, 5, 5));
+        ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
+        vTaskDelay(pdMS_TO_TICKS(50));
+        ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, index, 0, 0, 0));
+    }
     // Second set values & blink min & max
-    animate_time = 10;
-    while (animate_time > 0 && led_on_off == false) {
+    int animate_time = 10;
+    bool led_on_off = false;
+    while (animate_time > 0) {
         if (led_on_off) {
             ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, ZERO_CELSIUS_POSITION + temp_min, 5, 5, 5));
             ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, ZERO_CELSIUS_POSITION + temp_now, 5, 5, 5));
@@ -120,14 +108,12 @@ void light_animate_and_set(const int temp_min, const int temp_now, const int tem
             ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, ZERO_CELSIUS_POSITION + temp_min, 0, 0, 0));
             ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, ZERO_CELSIUS_POSITION + temp_max, 0, 0, 0));
         }
-
         /* Refresh the strip to send data */
         ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
         led_on_off = !led_on_off;
         vTaskDelay(pdMS_TO_TICKS(500));
         --animate_time;
     }
-
     // Third turn all off
     ESP_ERROR_CHECK(led_strip_clear(s_led_strip));
 }
