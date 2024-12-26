@@ -47,12 +47,12 @@ static const char *REQUEST = "GET "WEB_PATH" HTTP/1.0\r\n"
 
 light_animate_and_set_cb_t light_animate_and_set_cb;
 
-typedef void (*light_animate_and_set_wrapper_t)(const int, const int, const int);
+typedef void (*light_animate_and_set_wrapper_t)(int, int, int);
 
 /**
  * @brief Wrapper to access light_animate_and_set function in light_driver.c
  */
-void light_animate_and_set_wrapper(const int temp_min, const int temp_now, const int temp_max) {
+void light_animate_and_set_wrapper(int temp_min, int temp_now, int temp_max) {
   if (0) {
     ESP_LOGI(TAG, "%s, temp_min=%d, temp_now=%d, temp_max=%d", __func__, temp_min, temp_now, temp_max);
   }
@@ -71,15 +71,21 @@ void http_get_task(void *pvParameters)
     struct in_addr *addr;
     int s, r;
     char recv_buf[64];
-    int temp_min = 5;
-    int temp_now = 15;
-    int temp_max = 25;
+    int temp_min;
+    int temp_now;
+    int temp_max;
 
     while (1) {
-        if (esp_wifi_connect() != ESP_OK) {
+        /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
+        * Read "Establishing Wi-Fi or Ethernet Connection" section in
+        * examples/protocols/README.md for more information about this function.
+        */
+        ESP_ERROR_CHECK(example_connect());
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        while (esp_wifi_connect() != ESP_OK) {
             ESP_LOGE(TAG, "Failed to connect to wifi");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
-            continue;
         }
 
         int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
@@ -137,18 +143,38 @@ void http_get_task(void *pvParameters)
         ESP_LOGI(TAG, "... set socket receiving timeout success");
 
         /* Read HTTP response */
+        temp_now = 99;
+        temp_min = 99;
+        temp_max = -40;
         do {
             bzero(recv_buf, sizeof(recv_buf));
             r = read(s, recv_buf, sizeof(recv_buf)-1);
             for (int i = 0; i < r; i++) {
+                if (temp_now == 99 && (sscanf(&recv_buf[i], "\"temp\":%d", &temp_now) == 1)) {
+                    printf("temp_now=%d\n", temp_now);
+                }
+                int new_temp_min = 99;
+                if (sscanf(&recv_buf[i], "\"temp_min\":%d", &new_temp_min) == 1) {
+                    if (new_temp_min < temp_min) {
+                        temp_min = new_temp_min;
+                        printf("new temp_min=%d\n", temp_min);
+                    }
+                }
+                int new_temp_max = -40;
+                if (sscanf(&recv_buf[i], "\"temp_max\":%d", &new_temp_max) == 1) {
+                    if (new_temp_max > temp_max) {
+                        temp_max = new_temp_max;
+                        printf("new temp_max=%d\n", temp_max);
+                    }
+                }
+                // Output to console
                 putchar(recv_buf[i]);
             }
         } while (r > 0);
         putchar('\n');
         ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         ESP_ERROR_CHECK(close(s));
-
-        // Push results to led driver
+        ESP_ERROR_CHECK(example_disconnect());
         light_animateSet(temp_min, temp_now, temp_max);
 
         for (int countdown = 60; countdown >= 0; countdown--) {
@@ -159,7 +185,7 @@ void http_get_task(void *pvParameters)
     }
 }
 
-void http_get_init(void(*light_animate_and_set_cb_remote)(const int temp_min, const int temp_now, const int temp_max)){
+void http_get_init(void(*light_animate_and_set_cb_remote)(int temp_min, int temp_now, int temp_max)){
     light_animate_and_set_cb = light_animate_and_set_cb_remote;
     xTaskCreate(&http_get_task, "http_get_task", 4096, (void *)&light_animate_and_set_wrapper, 5, NULL);
 }

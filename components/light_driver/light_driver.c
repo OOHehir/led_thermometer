@@ -80,8 +80,35 @@ void light_driver_init(bool power) {
     light_driver_set_power(power);
 }
 
-void light_animate_and_set(const int temp_min, const int temp_now, const int temp_max) {
+void boundary_checks(int *temp_min, int *temp_now, int *temp_max) {
+    if (*temp_min < -15) {
+        *temp_min = -15;
+    }
+    if (*temp_max > 35) {
+        *temp_max = 35;
+    }
+    if (*temp_now < -15) {
+        *temp_now = -14;
+    }
+    if (*temp_now > 35) {
+        *temp_now = 34;
+    }
+
+    // Logic checks
+    if (*temp_now <= *temp_min) {
+        *temp_min = *temp_now - 1;
+    }
+    if (*temp_max < *temp_now) {
+        *temp_max = *temp_now + 1;
+    }
+    if (*temp_min < -15) {
+        *temp_min = -15;
+    }
+}
+
+void light_animate_and_set(int temp_min, int temp_now, int temp_max) {
     ESP_LOGI(TAG, "light_animate_and_set: temp_min=%d, temp_now=%d, temp_max=%d", temp_min, temp_now, temp_max);
+    boundary_checks(&temp_min, &temp_now, &temp_max);
     // First animate
     for (int index = 0; index < CONFIG_EXAMPLE_STRIP_LED_NUMBER; index++) {
         ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, index, 5, 5, 5));

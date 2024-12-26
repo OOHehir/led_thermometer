@@ -48,9 +48,12 @@ extern "C" {
 #define LIGHT_DEFAULT_OFF 0
 
 /* LED strip configuration */
+// Highest recorded temperature = 34
+// Lowest recorded temperature = -14
+// so use -15 to 35
 #define CONFIG_EXAMPLE_STRIP_LED_GPIO   10
-#define CONFIG_EXAMPLE_STRIP_LED_NUMBER 40
-#define ZERO_CELSIUS_POSITION 10
+#define CONFIG_EXAMPLE_STRIP_LED_NUMBER (15 + 35)
+#define ZERO_CELSIUS_POSITION 15
 
 /**
 * @brief Set light power (on/off).
@@ -82,7 +85,7 @@ void light_driver_init(bool power);
  * @param temp_now
  * @param temp_max
  */
-void light_animate_and_set(const int temp_min, const int temp_now, const int temp_max);
+void light_animate_and_set(int temp_min, int temp_now, int temp_max);
 
 #ifdef __cplusplus
 } // extern "C"
