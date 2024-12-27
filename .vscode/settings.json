@@ -6,5 +6,10 @@
         "board/esp32c3-builtin.cfg"
     ],
     "idf.port": "/dev/ttyACM0",
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "files.associations": {
+        "mqtt_client.h": "c",
+        "esp_transport.h": "c",
+        "esp_err.h": "c"
+    }
 }

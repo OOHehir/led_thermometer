@@ -13,8 +13,6 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
-//#include "nvs_flash.h"
-#include "protocol_examples_common.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -76,13 +74,6 @@ void http_get_task(void *pvParameters)
     int temp_max;
 
     while (1) {
-        /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-        * Read "Establishing Wi-Fi or Ethernet Connection" section in
-        * examples/protocols/README.md for more information about this function.
-        */
-        ESP_ERROR_CHECK(example_connect());
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-
         while (esp_wifi_connect() != ESP_OK) {
             ESP_LOGE(TAG, "Failed to connect to wifi");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -174,7 +165,6 @@ void http_get_task(void *pvParameters)
         putchar('\n');
         ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         ESP_ERROR_CHECK(close(s));
-        ESP_ERROR_CHECK(example_disconnect());
         light_animateSet(temp_min, temp_now, temp_max);
 
         for (int countdown = 60; countdown >= 0; countdown--) {
