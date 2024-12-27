@@ -1,0 +1,4 @@
+## IDF Component Manager Manifest File
+dependencies:
+  esp-mqtt:
+    path: ${IDF_PATH}/components/mqtt/esp-mqtt
