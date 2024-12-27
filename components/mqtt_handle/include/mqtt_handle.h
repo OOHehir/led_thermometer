@@ -12,10 +12,6 @@
 #ifndef MQTT_H_
 #define MQTT_H_
 
-void mqtt5_start(void);
-
-
-
-
+void mqtt_start(void);
 
 #endif  /* MQTT_H_ */

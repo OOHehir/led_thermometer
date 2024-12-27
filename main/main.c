@@ -36,6 +36,6 @@ void app_main(void)
     */
     ESP_ERROR_CHECK(example_connect());
 
-    mqtt5_start();
+    mqtt_start();
     http_get_init((light_animate_and_set_cb_t)light_animate_and_set);
 }
