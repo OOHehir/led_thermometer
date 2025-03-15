@@ -1,6 +1,6 @@
 {
     "C_Cpp.intelliSenseEngine": "default",
-    "idf.espIdfPath": "/home/owen/esp/v5.3/esp-idf",
+    "idf.espIdfPath": "/home/owen/esp/v5.4/esp-idf",
     "idf.toolsPath": "/home/owen/.espressif",
     "idf.openOcdConfigs": [
         "board/esp32c3-builtin.cfg"
@@ -11,5 +11,11 @@
         "mqtt_client.h": "c",
         "esp_transport.h": "c",
         "esp_err.h": "c"
+    },
+    "idf.pythonInstallPath": "/usr/bin/python3",
+    "idf.customExtraVars": {
+        "OPENOCD_SCRIPTS": "/home/owen/.espressif/tools/openocd-esp32/v0.12.0-esp32-20240318/openocd-esp32/share/openocd/scripts",
+        "ESP_ROM_ELF_DIR": "/home/owen/.espressif/tools/esp-rom-elfs/20240305/",
+        "IDF_TARGET": "esp32c3"
     }
 }
